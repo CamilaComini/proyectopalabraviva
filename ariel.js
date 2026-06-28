@@ -1,89 +1,85 @@
 document.addEventListener("DOMContentLoaded", () => {
-    // 1. CAPTURAR LAS PANTALLAS
-    const screenSplash = document.getElementById("screen-splash");
-    const screenMain = document.getElementById("screen-main");
-    const screenBibleDetail = document.getElementById("screen-bible-detail");
-    const screenPathDetail = document.getElementById("screen-path-detail");
 
-    // 2. CAPTURAR BOTONES INTERACTIVOS
-    const btnEnter = document.querySelector(".btn-enter");
-    const btnGotoBible = document.getElementById("btn-goto-bible");
-    const btnGotoPath = document.getElementById("btn-goto-path");
-    const btnBackBible = document.querySelector(".btn-back");
-    const btnBackPath = document.querySelector(".btn-back-path");
-    
-    const textParagraph = document.querySelector(".interact-paragraph");
-    const studyCard = document.getElementById("study-card");
-    const panelHandle = document.querySelector(".panel-handle");
-
-    // --- FUNCIÓN AUXILIAR PARA CAMBIAR DE PANTALLA ---
-    function changeScreen(screenToShow) {
-        // Ocultamos todas las pantallas sacándoles la clase 'active'
-        [screenSplash, screenMain, screenBibleDetail, screenPathDetail].forEach(screen => {
-            screen.classList.remove("active");
-        });
-        // Mostramos solo la pantalla elegida agregándole 'active'
-        screenToShow.classList.add("active");
-    }
-
-    // 3. ASIGNAR LOS CLICS A CADA BOTÓN (Navegación)
-    
-    // De Bienvenida a la Pantalla Partida
-    btnEnter.addEventListener("click", () => {
-        changeScreen(screenMain);
-    });
-
-    // De Pantalla Partida a Detalle de la Biblia (Bloque Superior)
-    btnGotoBible.addEventListener("click", () => {
-        changeScreen(screenBibleDetail);
-    });
-
-    // De Pantalla Partida a Detalle del Camino (Bloque Inferior)
-    btnGotoPath.addEventListener("click", () => {
-        changeScreen(screenPathDetail);
-    });
-
-    // Botón Volver de la Biblia a la Pantalla Partida
-    btnBackBible.addEventListener("click", () => {
-        changeScreen(screenMain);
-    });
-
-    // Botón Volver del Camino a la Pantalla Partida
-    btnBackPath.addEventListener("click", () => {
-        changeScreen(screenMain);
-    });
-// --- INTERACTIVIDAD DEL PANEL INFERIOR (Abanico en dos niveles) ---
-    
-    // Nivel 1: Abrir el panel base al tocar el versículo o la barrita
-    textParagraph.addEventListener("click", () => {
-        studyCard.classList.toggle("hidden");
-    });
-
-    panelHandle.addEventListener("click", () => {
-        studyCard.classList.toggle("hidden");
-    });
-
-    // Nivel 2: Tocar una tarjeta para abrirla en grande dejando espacio arriba
+    // ==========================================
+    // 1. CONTROL DEL ABANICO DE TARJETAS (BIBLIA)
+    // ==========================================
     const columns = document.querySelectorAll(".fan-column");
-    
-    columns.forEach(col => {
-        // Al tocar la minitarjeta
-        col.addEventListener("click", (e) => {
-            // Si hacemos clic en el botón de cerrar, que no ejecute la apertura
-            if (e.target.classList.contains("btn-close-extended")) return;
-            
-            // Si el panel de abajo está visible, expandimos esta tarjeta
-            if (!studyCard.classList.contains("hidden")) {
-                col.classList.add("expanded-full");
+    const studyCard = document.getElementById("studyCard");
+    const panelHandle = document.getElementById("panelHandle");
+
+    if (panelHandle && studyCard) {
+        panelHandle.addEventListener("click", () => {
+            studyCard.classList.toggle("hidden");
+            if (studyCard.classList.contains("hidden")) {
+                columns.forEach(c => c.classList.remove("expanded-full"));
             }
         });
+    }
 
-        // Al tocar el botón interno "✕ Cerrar"
-        const btnClose = col.querySelector(".btn-close-extended");
-        btnClose.addEventListener("click", (e) => {
-            e.stopPropagation(); // Evita conflictos de clics
-            col.classList.remove("expanded-full");
+    if (columns.length > 0) {
+        columns.forEach(col => {
+            col.addEventListener("click", (e) => {
+                if (e.target.classList.contains("btn-close-extended")) return;
+                columns.forEach(c => c.classList.remove("expanded-full"));
+                col.classList.add("expanded-full");
+            });
+
+            const btnClose = col.querySelector(".btn-close-extended");
+            if (btnClose) {
+                btnClose.addEventListener("click", (e) => {
+                    e.stopPropagation();
+                    col.classList.remove("expanded-full");
+                });
+            }
         });
-    });
+    }
+
+
+    // ==========================================
+    // 2. LÓGICA DE "CAMINEMOS CON JESÚS" (CORREGIDO)
+    // ==========================================
+    const moodButtons = document.querySelectorAll(".mood-buttons .badge");
+    const moodResponse = document.getElementById("moodResponse");
+
+    // El diccionario con las lecturas de la Biblia para cada estado
+    const moodLectures = {
+        optimo: {
+            text: '"Todo lo puedo en Cristo que me fortalece."',
+            verse: "Filipenses 4:13"
+        },
+        agradecido: {
+            text: '"Entrad por sus puertas con acción de gracias, por sus atrios con alabanza..."',
+            verse: "Salmo 100:4"
+        },
+        cansado: {
+            text: '"Venid a mí todos los que estáis trabajados y cargados, y yo os haré descansar."',
+            verse: "Mateo 11:28"
+        },
+        triste: {
+            text: '"Cercano está Jehová a los quebrantados de corazón; y salva a los contritos de espíritu."',
+            verse: "Salmo 34:18"
+        }
+    };
+
+    if (moodButtons.length > 0 && moodResponse) {
+        moodButtons.forEach(btn => {
+            btn.addEventListener("click", () => {
+                // A. Apagamos el estado visual activo en todos los botones y se lo asignamos al seleccionado
+                moodButtons.forEach(b => b.classList.remove("active"));
+                btn.classList.add("active");
+
+                // B. Leemos cuál identificador se presionó
+                const selectedMood = btn.getAttribute("data-mood");
+
+                // C. Reemplazamos dinámicamente el texto y versículo en el contenedor
+                if (moodLectures[selectedMood]) {
+                    moodResponse.innerHTML = `
+                        <p class="mood-text">${moodLectures[selectedMood].text}</p>
+                        <span class="mood-verse">${moodLectures[selectedMood].verse}</span>
+                    `;
+                }
+            });
+        });
+    }
+
 });
-    
